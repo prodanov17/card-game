@@ -12,11 +12,8 @@ public class Card {
         this.value = value;
     }
 
-    public void print(){
-        System.out.println(this.id + "." + this.symbol + this.letter);
-    }
-    public void printTable(){
-        System.out.println(this.symbol + this.letter);
+    public String toString(){
+        return this.symbol + this.letter;
     }
 
     public int getValue(){

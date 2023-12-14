@@ -2,13 +2,15 @@ import java.util.ArrayList;
 
 public class Table {
     ArrayList<Card> cards;
-    Table(){
+    Server server;
+    Table(Server server){
         cards = new ArrayList<Card>();
+        this.server = server;
     }
 
     public int addCard(Card card){
         if(takeCards(card)) {
-            System.out.println("TAKE");
+            server.broadcastMessage("TAKE");
             int value = this.calculateValue();
             int amount = cards.size();
             this.clearTable();
@@ -29,12 +31,13 @@ public class Table {
         return sum;
     }
 
-    public void printCards(){
-        System.out.println("Table cards: ");
-        if(cards.isEmpty()) System.out.println("-----");
-        for (Card card : cards) {
-            card.printTable();
-        }
+    public String printCards(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("[GAME] Table cards: ");
+        if(cards.isEmpty()) sb.append("-----");
+        cards.forEach(sb::append);
+
+        return sb.toString();
     }
 
     public void clearTable(){
@@ -42,9 +45,8 @@ public class Table {
     }
 
     private boolean takeCards(Card card){
-        System.out.println(card.getLetter());
-        System.out.println(this.getTopCard());
-        System.out.println("YE");
+        server.broadcastMessage(Character.toString(card.getLetter()));
+        server.broadcastMessage(Character.toString(this.getTopCard()));
         return card.getLetter() == this.getTopCard() || card.getLetter() == 'J';
     }
 

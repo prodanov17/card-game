@@ -37,20 +37,14 @@ public class Deck {
         return this.cards;
     }
 
-    void printDeck(){
-        for(int i = 0; i < this.cards.size(); i++){
-            cards.get(i).print();
-        }
-    }
-
     //works
     void shuffleDeck(){
         Collections.shuffle(cards);
     }
 
     //works
-    void getDreamCard(){
-        cards.get(0).print();
+    public String getDreamCard(){
+        return cards.get(0).toString();
     }
 
     boolean endOfDeck(){

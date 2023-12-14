@@ -2,24 +2,18 @@ import java.net.Socket;
 
 public class User {
     private String name;
-    private String addr;
-    private Socket clientSocket;
+    private ClientHandler client;
 
-    User(String name, String addr, Socket clientSocket){
+    User(String name, ClientHandler client){
         this.name = name;
-        this.addr = addr;
-        this.clientSocket = clientSocket;
+        this.client = client;
     }
 
     public String getName() {
         return name;
     }
 
-    public Socket getClientSocket() {
-        return clientSocket;
-    }
-
-    public String getAddr() {
-        return addr;
+    public ClientHandler getClient(){
+        return this.client;
     }
 }

@@ -1,8 +1,12 @@
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Game implements Runnable{
     private final int END_GAME_SCORE = 120;
+    private final int TOTAL_ROUNDS = 3;
+    Server server;
     private Deck deck;
     private Table table;
 
@@ -14,21 +18,26 @@ public class Game implements Runnable{
 
     private boolean running = false;
 
+    private Player playerTurn;
+    private int playerTurnIndex;
+
     List<Player> players;
 
-    Game(List<User> players){
+    Game(List<User> players, Server server){
+        this.server = server;
         this.deck = new Deck();
-        this.table = new Table();
+        this.table = new Table(server);
 
         this.teamOne = new Team(1);
         this.teamTwo = new Team(2);
 
+        this.playerTurn = null;
+
         this.players = new ArrayList<Player>();
 
         // assign teams
-        players.stream().limit(2).forEach(p-> new Player(this.teamOne, p.getName()));
-        players.stream().skip(2).forEach(p-> new Player(this.teamTwo, p.getName()));
-
+        players.stream().limit(2).forEach(p-> new Player(this.teamOne, p));
+        players.stream().skip(2).forEach(p-> new Player(this.teamTwo, p));
     }
     void startGame(){
         this.initialDeal = true;
@@ -37,6 +46,8 @@ public class Game implements Runnable{
         this.dealCards();
         this.dealTableCards();
         this.round = 1;
+        this.playerTurnIndex = 0;
+        playerTurn = players.get(playerTurnIndex);
     }
 
     @Override
@@ -44,28 +55,28 @@ public class Game implements Runnable{
         startGame();
 
         while (isRunning()) {
-            System.out.println("Round " + round);
-            System.out.println("Current table:");
+            server.broadcastMessage("Round " + round);
+            server.broadcastMessage("Current table:");
             table.printCards();
 
             for (Player player : players) {
-                System.out.println("\nPlayer " + player.getName() + "'s turn");
-                player.printCards();
+                server.broadcastMessage("\nPlayer " + player.getName() + "'s turn");
+                server.broadcastMessage(player.printCards());
 
-//                String cardInput = userInput.nextLine();
-                // TODO: handle user input
-                try {
-                    int cardValue = Integer.parseInt(cardInput);
-                    player.throwCard(cardValue, table);
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid input. Please enter a valid card value.");
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                if(playerTurn == player){
+                    String cardInput = player.getUser().getClient().readUserInput();
+
+                    // TODO: handle user input
+                    try {
+                        int cardInd = Integer.parseInt(cardInput);
+                        player.throwCard(player.getCards().get(cardInd), table);
+                        // limit to 0-4
+                        playerTurn = players.get((playerTurnIndex++)%4);
+                    } catch (NumberFormatException e) {
+                        server.broadcastMessage("[EXCEPTION] Invalid input. Please enter a valid card input.");
+                    } catch (Exception e) {
+                        server.broadcastMessage(e.getMessage());
+                    }
                 }
             }
 
@@ -76,13 +87,21 @@ public class Game implements Runnable{
 
                     if(gameEnded()){
                         Team winner = teamOne.getPoints() > teamTwo.getPoints() ? teamOne : teamTwo;
-                        System.out.println("The game has ended! The winner is team: " + winner.getNumber());
+                        if (teamOne.getNumber() > teamTwo.getNumber()) {
+                            teamOne.addPoints(8);
+                        } else {
+                            if(teamOne.getNumber() != teamTwo.getNumber())
+                                teamTwo.addPoints(8);
+                        }
+                        server.broadcastMessage("The game has ended! The winner is team: " + winner.getNumber());
+                        stopGame();
                         return;
                     }
+
                 }
-                System.out.println("Team One Points: " + teamOne.getPoints());
-                System.out.println("Team Two Points: " + teamTwo.getPoints());
-                System.out.println("Dealing next round...");
+                server.broadcastMessage("Team One Points: " + teamOne.getPoints());
+                server.broadcastMessage("Team Two Points: " + teamTwo.getPoints());
+                server.broadcastMessage("Dealing next round...");
                 dealCards();
                 dealTableCards();
                 progressRound();
@@ -91,7 +110,7 @@ public class Game implements Runnable{
     }
 
     public boolean gameEnded(){
-        return teamOne.getPoints() >= 120 || teamTwo.getPoints() >= 120;
+        return teamOne.getPoints() >= END_GAME_SCORE || teamTwo.getPoints() >= END_GAME_SCORE;
     }
 
     public boolean isRunning(){
@@ -104,11 +123,13 @@ public class Game implements Runnable{
     }
 
     public boolean dealNextRound(){
-        return players.stream().allMatch(p -> p.getHand().isEmpty());
+        return players.stream().allMatch(p -> p.getCards().isEmpty());
     }
 
     void progressRound(){
+        this.initialDeal = false;
         this.round++;
+        if(this.round > TOTAL_ROUNDS) this.round = 0;
     }
 
     List<Player> getPlayers() {
@@ -124,7 +145,7 @@ public class Game implements Runnable{
             try {
                 player.addCards(this.deck);
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+                server.broadcastMessage(ex.getMessage());
             }
         }
     }
@@ -135,7 +156,7 @@ public class Game implements Runnable{
             this.table.addCard(this.deck.drawCard());
             this.table.addCard(this.deck.drawCard());
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            server.broadcastMessage(ex.getMessage());
         }
     }
 }

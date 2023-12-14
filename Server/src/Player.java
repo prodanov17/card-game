@@ -1,12 +1,13 @@
 import java.util.ArrayList;
+import java.util.List;
 
 class Player {
-    private String name;
-    ArrayList<Card> hand;
+    private User user;
+    List<Card> hand;
     Team team;
 
-    Player(Team team, String name){
-        this.name = name;
+    Player(Team team, User user){
+        this.user = user;
         this.hand = new ArrayList<Card>();
         this.team = team;
     }
@@ -14,8 +15,16 @@ class Player {
 
     Player(){};
 
+    public User getUser(){
+        return this.user;
+    }
+
+    public List<Card> getCards(){
+        return this.hand;
+    }
+
     public String getName(){
-        return this.name;
+        return this.user.getName();
     }
     private boolean hasCard(int cardId){
         for (Card card : hand) {
@@ -24,39 +33,32 @@ class Player {
         return false;
     }
 
-    public ArrayList<Card> getHand(){
-        return this.hand;
-    }
-
     public Team getTeam(){
         return this.team;
     }
 
     public void addCards(Deck deck) throws Exception{
-        if(hand.size() >= 4) throw new Exception("Player already has 4 cards");
+        if(hand.size() >= 4) throw new Exception("[EXCEPTION] Player already has 4 cards");
         for (int i = 0; i < 4; i++) {
             this.hand.add(deck.drawCard());
         }
     }
 
-    public void printCards(){
-        System.out.println("Player cards: ");
-        hand.forEach(Card::print);
+    public String printCards(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("[GAME] Player cards: ");
+        hand.forEach(sb::append);
+
+        return sb.toString();
     }
 
-    public void throwCard(int cardId, Table table) throws Exception{
-        for (Card card : hand) {
-            if (card.getId() == cardId) {
-                int amount = table.getNumberOfCards() + 1;
-                int points = table.addCard(card);
-                if(points > -1){
-                    this.team.addPoints(points);
-                    this.team.addTotalCards(amount);
-                }
-                this.hand.remove(card);
-                return;
-            }
+    public void throwCard(Card card, Table table){
+        int amount = table.getNumberOfCards() + 1;
+        int points = table.addCard(card);
+        if(points > -1){
+            this.team.addPoints(points);
+            this.team.addTotalCards(amount);
         }
-        throw new Exception("Card not found");
+        this.hand.remove(card);
     }
 }
