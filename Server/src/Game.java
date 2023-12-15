@@ -6,7 +6,9 @@ import java.util.List;
 public class Game implements Runnable{
     private final int END_GAME_SCORE = 120;
     private final int TOTAL_ROUNDS = 3;
-    Server server;
+    private Server server;
+    private String gameId;
+    private String gameName;
     private Deck deck;
     private Table table;
 
@@ -23,7 +25,7 @@ public class Game implements Runnable{
 
     List<Player> players;
 
-    Game(List<User> players, Server server){
+    Game(Server server, String gameName){
         this.server = server;
         this.deck = new Deck();
         this.table = new Table(server);
@@ -34,11 +36,28 @@ public class Game implements Runnable{
         this.playerTurn = null;
 
         this.players = new ArrayList<Player>();
-
-        // assign teams
-        players.stream().limit(2).forEach(p-> new Player(this.teamOne, p));
-        players.stream().skip(2).forEach(p-> new Player(this.teamTwo, p));
+        this.gameName = gameName;
+        this.gameId = GameIdGenerator.generateUniqueId();
     }
+
+    public void addPlayer(User player) throws Exception{
+        if(players.size() > 3) throw new Exception("[EXCEPTION] Game is full. Please join another one!");
+        if(players.size() < 2){
+            players.add(new Player(this.teamOne, player));
+        }
+        else {
+            players.add(new Player(this.teamTwo, player));
+        }
+    }
+
+    public String getGameName(){
+        return this.gameName;
+    }
+
+    public String getGameId(){
+        return this.gameId;
+    }
+
     void startGame(){
         this.initialDeal = true;
         this.running = true;
@@ -52,39 +71,46 @@ public class Game implements Runnable{
 
     @Override
     public void run(){
-        startGame();
+//        startGame();
 
+        players.forEach(p->p.getUserClient().sendMessage(p.printCards()));
         while (isRunning()) {
-            server.broadcastMessage("Round " + round);
-            server.broadcastMessage("Current table:");
-            table.printCards();
-
             for (Player player : players) {
-                server.broadcastMessage("\nPlayer " + player.getName() + "'s turn");
-                server.broadcastMessage(player.printCards());
+                server.broadcastMessage(table.printCards());
+//                player.getUserClient().sendMessage(player.printCards());
 
                 if(playerTurn == player){
-                    String cardInput = player.getUser().getClient().readUserInput();
+                    server.broadcastMessage("[GAME] Player " + player.getName() + "'s turn");
+                    player.getUserClient().sendMessage("[GAME] YOUR TURN!");
+                    player.getUserClient().sendMessage("true");
+                    String cardInput = player.getUser().getClient().readUserInput().trim();
 
                     // TODO: handle user input
                     try {
                         int cardInd = Integer.parseInt(cardInput);
-                        player.throwCard(player.getCards().get(cardInd), table);
+                        Card thrownCard = player.getCards().get(cardInd);
+                        player.throwCard(thrownCard, table);
                         // limit to 0-4
-                        playerTurn = players.get((playerTurnIndex++)%4);
+                        playerTurnIndex++;
+                        playerTurn = players.get(playerTurnIndex%4);
+                        server.broadcastMessage(String.format("[GAME] %s thrown by %s", thrownCard, player.getUser().getName()));
                     } catch (NumberFormatException e) {
-                        server.broadcastMessage("[EXCEPTION] Invalid input. Please enter a valid card input.");
+                        player.getUserClient().sendMessage("[EXCEPTION] Invalid input. Please enter a valid card input.");
+                        continue;
                     } catch (Exception e) {
                         server.broadcastMessage(e.getMessage());
+                        continue;
                     }
                 }
+                else player.getUserClient().sendMessage("false");
             }
 
             if (dealNextRound()) {
+                boolean dealTable = false;
                 if(deck.endOfDeck()){
-                    // TODO: calculate which team has more cards
+                    System.out.println("[LOG] End of deck");
                     deck = new Deck();
-
+                    deck.shuffleDeck();
                     if(gameEnded()){
                         Team winner = teamOne.getPoints() > teamTwo.getPoints() ? teamOne : teamTwo;
                         if (teamOne.getNumber() > teamTwo.getNumber()) {
@@ -93,18 +119,18 @@ public class Game implements Runnable{
                             if(teamOne.getNumber() != teamTwo.getNumber())
                                 teamTwo.addPoints(8);
                         }
-                        server.broadcastMessage("The game has ended! The winner is team: " + winner.getNumber());
+                        server.broadcastMessage("[INFO] The game has ended! The winner is team: " + winner.getNumber());
                         stopGame();
                         return;
                     }
-
+                    dealTable = true;
                 }
-                server.broadcastMessage("Team One Points: " + teamOne.getPoints());
-                server.broadcastMessage("Team Two Points: " + teamTwo.getPoints());
-                server.broadcastMessage("Dealing next round...");
+                server.broadcastMessage("[INFO] Team One Points: " + teamOne.getPoints());
+                server.broadcastMessage("[INFO] Team Two Points: " + teamTwo.getPoints());
+                server.broadcastMessage("[GAME] Dealing next round...");
                 dealCards();
-                dealTableCards();
                 progressRound();
+                if(dealTable) dealTableCards();
             }
         }
     }

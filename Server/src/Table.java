@@ -45,8 +45,7 @@ public class Table {
     }
 
     private boolean takeCards(Card card){
-        server.broadcastMessage(Character.toString(card.getLetter()));
-        server.broadcastMessage(Character.toString(this.getTopCard()));
+        if(card.getLetter() == 'J' && this.cards.isEmpty()) return false;
         return card.getLetter() == this.getTopCard() || card.getLetter() == 'J';
     }
 

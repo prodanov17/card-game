@@ -44,10 +44,14 @@ class Player {
         }
     }
 
+    public ClientHandler getUserClient(){
+        return this.getUser().getClient();
+    }
+
     public String printCards(){
         StringBuilder sb = new StringBuilder();
-        sb.append("[GAME] Player cards: ");
-        hand.forEach(sb::append);
+        sb.append("[GAME] Player cards: \n");
+        hand.forEach(e->sb.append(e).append("\n"));
 
         return sb.toString();
     }
