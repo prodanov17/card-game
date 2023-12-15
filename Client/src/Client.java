@@ -111,29 +111,6 @@ public class Client {
             }
         }
     }
-    private void joinGame() {
-        // TODO: Implement logic for joining a game
-        writer.println("1"); // Send the choice to the server
-        String response;
-        try {
-            response = serverInputReader.readLine();
-            System.out.println("Server response: " + response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void createGame() {
-        // TODO: Implement logic for creating a game
-        writer.println("2"); // Send the choice to the server
-        String response;
-        try {
-            response = serverInputReader.readLine();
-            System.out.println("Server response: " + response);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     private void exit() {
         // TODO: Implement logic for exiting the client

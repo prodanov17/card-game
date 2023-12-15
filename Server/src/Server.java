@@ -99,7 +99,7 @@ public class Server implements Runnable{
     }
 
     public static void main(String[] args) {
-        int port = 12345; // Choose a suitable port
+        int port = 21450; // Choose a suitable port
         Server server = new Server(port);
         Thread acceptClients = new Thread(server);
         acceptClients.start();

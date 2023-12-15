@@ -21,7 +21,8 @@ public class ClientHandler implements Runnable {
             String playerName = readUserInput().trim();
             user = new User(playerName, this);
             sendMessage("Successfully connected");
-            System.out.printf("[LOG] %s successfully connected!", user.getName());
+            System.out.printf("[LOG] %s successfully connected!\n", user.getName());
+            System.out.println("New connection from: " + clientSocket.getInetAddress().getHostAddress());
             handleGameOptions();
 
         } catch (IOException e) {

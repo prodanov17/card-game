@@ -28,10 +28,10 @@ public class Game implements Runnable{
     Game(Server server, String gameName){
         this.server = server;
         this.deck = new Deck();
-        this.table = new Table(server);
 
         this.teamOne = new Team(1);
         this.teamTwo = new Team(2);
+        this.table = new Table(server);
 
         this.playerTurn = null;
 
@@ -77,11 +77,11 @@ public class Game implements Runnable{
         while (isRunning()) {
             for (Player player : players) {
                 server.broadcastMessage(table.printCards());
-//                player.getUserClient().sendMessage(player.printCards());
 
                 if(playerTurn == player){
-                    server.broadcastMessage("[GAME] Player " + player.getName() + "'s turn");
-                    player.getUserClient().sendMessage("[GAME] YOUR TURN!");
+                    server.broadcastMessage("[INFO] Player " + player.getName() + "'s turn");
+                    player.getUserClient().sendMessage(player.printCards());
+                    player.getUserClient().sendMessage("[INFO] YOUR TURN!");
                     player.getUserClient().sendMessage("true");
                     String cardInput = player.getUser().getClient().readUserInput().trim();
 
