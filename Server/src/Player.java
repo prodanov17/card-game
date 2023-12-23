@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 class Player {
     private User user;
@@ -51,7 +52,10 @@ class Player {
     public String printCards(){
         StringBuilder sb = new StringBuilder();
         sb.append("[GAME] Player cards: \n");
-        hand.forEach(e->sb.append(e).append("\n"));
+        IntStream.range(0, hand.size())
+                .mapToObj(i -> i + ". " + hand.get(i) + "\n")
+                .forEach(sb::append);
+
 
         return sb.toString();
     }

@@ -43,9 +43,11 @@ public class Server implements Runnable{
     }
 
     public String createGame(ClientHandler ch){
+        System.out.printf("[LOG] Game created by %s\n", ch.getUser().getName());
         Game game = new Game(this, String.format("%s's game", ch.getUser().getName()));
         try {
             game.addPlayer(ch.getUser());
+            System.out.printf("[LOG] Player %s joined \"%s\". Game ID: %s\n", ch.getUser().getName(), game.getGameName(), game.getGameId());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -63,6 +65,7 @@ public class Server implements Runnable{
             // Add the client to the chosen game
             try{
                 chosenGame.addPlayer(ch.getUser());
+                System.out.printf("[LOG] Player %s joined \"%s\". Game ID: %s\n", ch.getUser().getName(), chosenGame.getGameName(), chosenGame.getGameId());
             }
             catch(Exception e){
                 ch.sendMessage(e.getMessage());

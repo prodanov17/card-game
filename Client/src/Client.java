@@ -17,8 +17,10 @@ public class Client {
         this.userInputReader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
+            String connectTo = "localhost";
+//            String connectTo = "85.90.246.130";
             // Connect to the server
-            socket = new Socket("localhost", 12345);
+            socket = new Socket(connectTo, 21450);
             serverInputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
 

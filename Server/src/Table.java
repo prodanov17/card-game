@@ -2,21 +2,31 @@ import java.util.ArrayList;
 
 public class Table {
     ArrayList<Card> cards;
+    boolean firstRound;
     Server server;
     Table(Server server){
         cards = new ArrayList<Card>();
         this.server = server;
+        this.firstRound = true;
     }
 
     public int addCard(Card card){
         if(takeCards(card)) {
-            server.broadcastMessage("TAKE");
-            int value = this.calculateValue();
-            int amount = cards.size();
+            int value = 0;
+            if(this.cards.size() == 1 && card.getLetter() != 'J'){
+                server.broadcastMessage("ZNK");
+                value = this.calculateValue() + 10;
+            }
+            else {
+                server.broadcastMessage("TAKE");
+                value = this.calculateValue();
+            }
             this.clearTable();
+            this.firstRound = false;
             return value;
         }
         cards.add(card);
+        this.firstRound = false;
         return -1;
     }
 
@@ -45,12 +55,13 @@ public class Table {
     }
 
     private boolean takeCards(Card card){
+        char chosenCard = firstRound ? this.getBottomCard() : this.getTopCard();
         if(card.getLetter() == 'J' && this.cards.isEmpty()) return false;
-        return card.getLetter() == this.getTopCard() || card.getLetter() == 'J';
+        return card.getLetter() == chosenCard || card.getLetter() == 'J';
     }
 
-    public Card getBottomCard(){
-        return this.cards.get(0);
+    public char getBottomCard(){
+        return this.cards.get(0).getLetter();
     }
     public char getTopCard(){
         if (this.cards.isEmpty()) {
@@ -59,5 +70,17 @@ public class Table {
 
         int lastIndex = this.cards.size() - 1;
         return this.cards.get(lastIndex).getLetter();
+    }
+
+    public void dealTableCards(Deck deck){
+        try {
+            this.firstRound = true;
+            this.cards.add(deck.drawCard());
+            this.cards.add(deck.drawCard());
+            this.cards.add(deck.drawCard());
+            this.cards.add(deck.drawCard());
+        } catch (Exception ex) {
+            server.broadcastMessage(ex.getMessage());
+        }
     }
 }

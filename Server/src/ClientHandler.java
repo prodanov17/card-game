@@ -6,6 +6,7 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private User user;
     private Server server;
+    private boolean isPlaying;
     private InputStream inputStream;
     private OutputStream outputStream;
 
@@ -23,7 +24,6 @@ public class ClientHandler implements Runnable {
             sendMessage("Successfully connected");
             System.out.printf("[LOG] %s successfully connected!\n", user.getName());
             System.out.println("New connection from: " + clientSocket.getInetAddress().getHostAddress());
-            handleGameOptions();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -36,6 +36,7 @@ public class ClientHandler implements Runnable {
         try {
             inputStream = clientSocket.getInputStream();
             outputStream = clientSocket.getOutputStream();
+            if(!isPlaying) handleGameOptions();
 //            readMessages();
         } catch (IOException e) {
 //            e.printStackTrace();
@@ -117,6 +118,7 @@ public class ClientHandler implements Runnable {
 
                 if (!gameId.isEmpty()) {
                     server.joinGame(this, gameId);
+                    isPlaying = true;
                 } else {
                     sendMessage("Invalid game ID. Please enter a valid ID.");
                     handleGameOptions();
@@ -125,6 +127,7 @@ public class ClientHandler implements Runnable {
             case "2":
                 // TODO: Implement logic for creating a game
                 String id = server.createGame(this);
+                isPlaying = true;
                 sendMessage(String.format("Game successfully created. Game ID: %s", id));
                 break;
             default:

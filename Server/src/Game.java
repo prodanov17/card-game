@@ -63,7 +63,7 @@ public class Game implements Runnable{
         this.running = true;
         this.deck.shuffleDeck();
         this.dealCards();
-        this.dealTableCards();
+        this.table.dealTableCards(this.deck);
         this.round = 1;
         this.playerTurnIndex = 0;
         playerTurn = players.get(playerTurnIndex);
@@ -73,8 +73,8 @@ public class Game implements Runnable{
     public void run(){
 //        startGame();
 
-        players.forEach(p->p.getUserClient().sendMessage(p.printCards()));
         while (isRunning()) {
+            players.forEach(p->p.getUserClient().sendMessage(p.printCards()));
             for (Player player : players) {
                 server.broadcastMessage(table.printCards());
 
@@ -108,7 +108,6 @@ public class Game implements Runnable{
             if (dealNextRound()) {
                 boolean dealTable = false;
                 if(deck.endOfDeck()){
-                    System.out.println("[LOG] End of deck");
                     deck = new Deck();
                     deck.shuffleDeck();
                     if(gameEnded()){
@@ -130,7 +129,11 @@ public class Game implements Runnable{
                 server.broadcastMessage("[GAME] Dealing next round...");
                 dealCards();
                 progressRound();
-                if(dealTable) dealTableCards();
+                if(dealTable) {
+                    this.table.clearTable();
+                    this.table.dealTableCards(this.deck);
+                    server.broadcastMessage("[GAME] New round...");
+                }
             }
         }
     }
@@ -173,16 +176,6 @@ public class Game implements Runnable{
             } catch (Exception ex) {
                 server.broadcastMessage(ex.getMessage());
             }
-        }
-    }
-    void dealTableCards(){
-        try {
-            this.table.addCard(this.deck.drawCard());
-            this.table.addCard(this.deck.drawCard());
-            this.table.addCard(this.deck.drawCard());
-            this.table.addCard(this.deck.drawCard());
-        } catch (Exception ex) {
-            server.broadcastMessage(ex.getMessage());
         }
     }
 }
